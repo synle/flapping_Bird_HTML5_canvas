@@ -108,7 +108,7 @@
 
     function youfail() {
         console.log('you fail');
-        statusText.innerHTML = 'You failed with score of ' + countPassTube;
+        statusText.innerHTML = 'You failed with score of ' + countPassTube + '. Press enter to restart';
         clearInterval(updateLoop);
         clearInterval(updateTubesLoop);
         
