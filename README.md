@@ -5,4 +5,4 @@ flapping bird game clone written in HTML5, Canvas and Javascript
 
 For a live demo, please visit:
 
-http://jsbin.com/tuxuf/1
+http://jsbin.com/tuxuf/2
