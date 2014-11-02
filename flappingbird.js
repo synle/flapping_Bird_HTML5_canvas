@@ -28,7 +28,6 @@
         }
         //stuffs
     var upforce = 0; //upforce that keep bird up
-    var visibleTubes = []; //array of
     var countPassTube = 0;//count of how many tubes have passed
     var isOver = false;
     var updateLoop, updateTubesLoop;//event loop
@@ -52,30 +51,57 @@
     }
 
     function drawRect(x, y, w, h) {
-        context.beginPath();
-        context.rect(x, y, w, h);
-        context.fillStyle = 'yellow';
-        context.fill();
-        context.lineWidth = 5;
-        context.strokeStyle = 'black';
-        context.stroke();
+        if (arguments.length === 4){
+            context.beginPath();
+            context.rect(x, y, w, h);
+            context.fillStyle = 'yellow';
+            context.fill();
+            context.lineWidth = 5;
+            context.strokeStyle = 'black';
+            context.stroke();
+        }
+        else{
+            var rect = arguments[0];
+            drawRect(rect.x, rect.y, rect.w, rect.h);
+        }
+    }
+    
+    function getTopHalfBox(tube){
+        var x = tube.x - TUBE_CONSTANT.width / 2;
+        var y = 0;
+        var w = TUBE_CONSTANT.width;
+        var h = tube.y - TUBE_CONSTANT.gap / 2;
+        
+        return {
+            x : x,
+            y : y,
+            w : w,
+            h : h,
+        }
+    }
+    
+    function getBottomHalfBox(tube){
+        var x = tube.x - TUBE_CONSTANT.width / 2;
+        var y = 0;
+        var w = TUBE_CONSTANT.width;
+        var h = tube.y - TUBE_CONSTANT.gap / 2;
+        y = h + TUBE_CONSTANT.gap;
+        h = canvasHeight;
+        
+        return {
+            x : x,
+            y : y,
+            w : w,
+            h : h,
+        }
     }
 
     function drawTube(tube) {
-        var x,
-            y,
-            w,
-            h;
-        //top half
-        x = tube.x - TUBE_CONSTANT.width / 2;
-        y = 0;
-        w = TUBE_CONSTANT.width;
-        h = tube.y - TUBE_CONSTANT.gap / 2;
-        drawRect(x, y, w, h);
-        //bottom half
-        y = h + TUBE_CONSTANT.gap;
-        h = canvasHeight;
-        drawRect(x, y, w, h);
+        var topTube = getTopHalfBox(tube);
+        var bottomTube = getBottomHalfBox(tube);
+        
+        drawRect(topTube);
+        drawRect(bottomTube);
     }
 
     function drawTubes() {
@@ -117,6 +143,17 @@
         isOver = true;
     }
     
+    function isBirdCollided(circle, rect){
+        return isPointBoundedInRect(circle, rect);
+        //return isPointBoundedInRect({x : circle.x + circle.r, y: circle.y - circle.r}, rect) === false
+        //&& isPointBoundedInRect({x : circle.x + circle.r, y: circle.y + circle.r }, rect) === false;
+    }
+    
+    function isPointBoundedInRect(pt, rect){
+        return pt.x >= rect.x && pt.x <= rect.x + rect.w
+        && pt.y >= rect.y && pt.y <= rect.y + rect.h;
+    }
+    
     
     function newGame(){
         isOver = false;
@@ -149,6 +186,7 @@
                     countPassTube++;
                 }
             }
+            
             if (visibleTubes.length != updatedVisibleTubes.length){
                 visibleTubes = updatedVisibleTubes;
             }
@@ -159,9 +197,33 @@
             if (upforce > 0)
                 upforce--;
             //offsetY adjusted by gravity, upforce, and gravity pull as it gets close to the ground
+            var isYouFail = false;
             offsetY += -1 * (upforce + PHYSICS_CONSTANT.gravity + 0.1 * PHYSICS_CONSTANT.gravity * (canvasHeight - offsetY) / canvasHeight);
             drawCircle(r, offsetX, offsetY);
             if (r + offsetY > canvasHeight || offsetY - r <= 0) {
+                isYouFail = true;
+            }
+            
+            
+            //check for the first coming box
+            var firstTube = updatedVisibleTubes[0];
+            var topTube = getTopHalfBox(firstTube);
+            var bottomTube = getBottomHalfBox(firstTube);
+            
+            //check for collision for top segment
+            if (isBirdCollided({x : offsetX, y : offsetY, r : r}, topTube)){
+                isYouFail = true;
+            }
+            
+            //check for collision for bottom segment
+            if (isBirdCollided({x : offsetX, y : offsetY, r : r}, bottomTube)){
+                isYouFail = true;
+            }
+        
+
+
+            //you fail, then show error
+            if (isYouFail){
                 youfail();
             }
         }, 50);
